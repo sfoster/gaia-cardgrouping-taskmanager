@@ -1,6 +1,6 @@
 (function(exports) {
 
-const kEdgeIntertia = 250;
+var kEdgeIntertia = 250;
 
 function SwipeDetector(elem) {
   this.element = elem;
@@ -102,7 +102,7 @@ SwipeDetector.prototype = {
           clearTimeout(this._cancelTimeout);
         }
         if (!this.currentTarget) {
-          console.log('touchmove, no currentTarget', evt);
+          // console.log('touchmove, no currentTarget', evt);
           return;
         }
         if (!this.startTouchPosition) {
@@ -124,6 +124,7 @@ SwipeDetector.prototype = {
         } else if (absX >= this.SWIPE_WOBBLE_THRESHOLD ||
                    absY >= this.SWIPE_WOBBLE_THRESHOLD) {
           this._swipeAxis = absX > absY ? 'horizontal' : 'vertical';
+          console.log('swipe in direction: ' + this._swipeAxis, absX, absY);
           this.dispatch('start', this.currentTarget, evt);
         }
         break;
@@ -146,9 +147,8 @@ SwipeDetector.prototype = {
         ];
         this._startDate = Date.now();
 
-        // start a new gesture
+        // tentatively start a new gesture
         console.log('touchstart event on container element, start new gesture');
-        evt.stopPropagation();
         this._deltaX = 0;
         this._deltaY = 0;
 
@@ -174,6 +174,13 @@ SwipeDetector.prototype = {
           return;
         }
         this._update(evt.changedTouches[0]);
+
+        // no significant movement, not a swipe
+        if (!this._swipeAxis) {
+          this._cancelCurrentSwipe(evt);
+          return;
+        }
+
         console.log('dispatching -end event for currentTarget', this.currentTarget);
         this.dispatch('end', this.currentTarget, evt);
         this.reset();

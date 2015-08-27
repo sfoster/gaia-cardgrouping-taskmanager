@@ -18,7 +18,8 @@ Array.from(document.querySelectorAll('#cards-list > .column')).forEach(function(
         };
         this.columnIndex = columnIdx;
         this.rowIndex = rowIdx;
-
+        this.closeButton = this.element.querySelector('.close-button');
+        this.closeButton.addEventListener('click', this);
         this.element.dataset.groupsize = rowIdx === 0 ? groupSize : 1;
         this.element.dataset.position = rowIdx;
         this.element.dataset.closeable = true;
@@ -28,7 +29,18 @@ Array.from(document.querySelectorAll('#cards-list > .column')).forEach(function(
       killApp: function() {
         console.log('killApp');
         swipeDetector.detachFromElement(this.element);
-        this.element.style.opacity = 0.1;
+        this.closeButton.removeEventListener('click', this);
+        cardGroups.closeCard(this.element);
+      },
+      handleEvent: function(evt) {
+        switch (evt.type) {
+          case 'click':
+            if (evt.target === this.closeButton) {
+              evt.stopImmediatePropagation();
+              this.killApp();
+            }
+            break;
+        }
       },
       _not_in_use_handleSwipeEvent: function(evt) {
         switch (evt.detail.gestureType) {
@@ -81,9 +93,11 @@ var cardGroups = {
   _expandedColumn: null,
 
   CARD_GUTTER: 25,
+  CARD_VERTICAL_SPACING: 120,
   SWIPE_COLLAPSE_THRESHOLD: window.innerWidth * 0.25 * window.devicePixelRatio,
   SWIPE_EXPAND_THRESHOLD: window.innerWidth * 0.25 * window.devicePixelRatio,
   SWIPE_TO_CLOSE_THRESHOLD: window.innerHeight * 0.25 * window.devicePixelRatio,
+
 
   init: function() {
     this.cardsList.addEventListener('cardview-swipe-start', this);
@@ -93,8 +107,14 @@ var cardGroups = {
 
     this.windowWidth = window.innerWidth;
     this.windowHeight = window.innerHeight;
-    this.cardWidth = this.windowWidth * .5;
+    this.cardWidth = this.windowWidth * 0.5;
+    this.cardHeight = this.windowHeight * 0.5;
     this._setContentWidth(this.cardsList.children.length);
+    // decorate each <li> with its position in its list
+    // we do this in the card.init too, whatever.
+    Array.from(this.element.querySelectorAll('ul.cardgroup-list')).forEach(function(listNode) {
+      this._updateCardPositions(listNode);
+    }, this);
   },
 
   _setContentWidth: function (length) {
@@ -133,7 +153,7 @@ var cardGroups = {
 
       // enter expanded state
       this._expandedColumn = column;
-      this.element.style.overflowX = 'hidden';
+      this.toggleScrollingOnAxis('horizontal', false);
       column.classList.toggle('expanded', true);
       // cache the scrollTopMax, so we know if scroll occurs at scroll extents
       // forces reflow?
@@ -259,12 +279,12 @@ var cardGroups = {
     switch (evt.type) {
       case 'cardview-swipe-progress':
         if (isSwipeBeyondScrollExtent(target, detail)) {
-          this.slideCard(target, detail);
+          console.log('isSwipeBeyondScrollExtent: true');
+          // just let the overscroll do its thing
         }
         else if (detail.swipeAxis === 'horizontal') {
           if (this.isCard(target)) {
-            // move element to follow the swipe
-            this.slideCard(target, detail);
+          // just let the overscroll do its thing
           } else {
             // TODO: any visual feedback, or indication that this gesture will result
             // in collapsing the list?
@@ -279,32 +299,19 @@ var cardGroups = {
         console.log('handling cardview-swipe-start, _scrollTopStart: ', this._scrollTopStart);
 
         if (isSwipeBeyondScrollExtent(target, detail)) {
-          target.style.willChange =   'transform';
-          target.style.transition = 'transform 0s linear';
+          // we'll let overscroll do its thing.
         }
         if (detail.swipeAxis === 'horizontal') {
           // stop it drifting on y-scroll-axis while we drag horizontaly
           this.toggleScrollingOnAxis('vertical', false);
-        } else {
-          // this.toggleScrollingOnAxis('horizontal', false);
         }
         break;
 
       case 'cardview-swipe-end':
-        // console.log('handleSwipeEventOnExpandedGroup, cardview-swipe-end: ', detail, {
-        //   _scrollTopStart: this._scrollTopStart,
-        //   scrollTopStartedAt0: this._scrollTopStart === 0,
-        //   isCard: this.isCard(target),
-        //   isPosition0: parseInt(target.dataset.position) === 0,
-        //   SWIPE_COLLAPSE_THRESHOLD: this.SWIPE_COLLAPSE_THRESHOLD,
-        //   exceedsThreshold: Math.abs(detail.deltaY) > this.SWIPE_COLLAPSE_THRESHOLD,
-        // });
-        this.resetScrollAxes();
-        target.style.removeProperty('will-change');
-        target.style.removeProperty('transform');
+        this.toggleScrollingOnAxis('horizontal', false);
+        this.toggleScrollingOnAxis('vertical', true);
 
         if (isSwipeBeyondScrollExtent(target, detail)) {
-            this.slideCard(target); // reset transform
             if (Math.abs(detail.deltaY) > this.SWIPE_COLLAPSE_THRESHOLD) {
               console.log('swipe on top/bottom card, changing to collapsed state');
               this.changeExpandedState(false);
@@ -312,7 +319,6 @@ var cardGroups = {
         }
         else if (detail.swipeAxis === 'horizontal') {
           if (this.isCard(target) && Math.abs(detail.deltaX) > this.SWIPE_COLLAPSE_THRESHOLD) {
-            this.slideCard(target); // reset transform
             this.changeExpandedState(false);
           }
         }
@@ -361,9 +367,11 @@ var cardGroups = {
           return;
         }
         if ((detail.direction === 'up') &&
-            target.dataset.closable
             (Math.abs(detail.deltaY) > this.SWIPE_TO_CLOSE_THRESHOLD)) {
-          this.closeCard(target);
+          if (target.dataset.closeable) {
+            this.closeCard(target);
+            return;
+          }
         }
         this.slideCard(target); // reset
         break;
@@ -371,7 +379,60 @@ var cardGroups = {
         this.slideCard(target);
         break;
     }
+  },
+  _centerCardAtHorizontalPosition: function(idx, smooth) {
+    var position = (this.cardWidth + this.CARD_GUTTER) * idx;
+    if (smooth) {
+      this.element.scrollTo({left: position, top: 0, behavior: 'smooth'});
+    } else {
+      this.element.scrollTo(position, 0);
+    }
+  },
+  _centerCardAtColumnPosition: function(column, idx, smooth) {
+    var position = (this.cardHeight + this.CARD_VERTICAL_SPACING) * idx;
+    if (smooth) {
+      column.scrollTo({left: 0, top: position, behavior: 'smooth'});
+    } else {
+      column.scrollTo(0, position);
+    }
+  },
+
+  _updateCardPositions: function(listNode, firstIndex) {
+    var cardNodes = listNode.children;
+    for (var i = firstIndex || 0; cardNodes[i]; i++) {
+      if (cardNodes[i]) {
+        cardNodes[i].dataset.position = i;
+      }
+    }
+  },
+
+  closeCard: function(elem) {
+    console.log('closeCard for: ', elem);
+    var listNode = elem.parentNode;
+    var column = this.getContainingColumn(elem);
+    var position = parseInt(elem.dataset.position);
+    var lastIndex;
+    elem.remove();
+
+    if (listNode.childElementCount) {
+      this._updateCardPositions(listNode); // pass the <ul>
+      lastIndex = listNode.childElementCount -1;
+      position = Math.min(position, lastIndex);
+    } else {
+      listNode = column.parentNode;
+      lastIndex = listNode.childElementCount -1;
+      position = Math.min(parseInt(column.dataset.position), lastIndex);
+      console.log('closeCard, remove empty column', column, position);
+      column.remove();
+      this._updateCardPositions(listNode); // pass the <ul>
+    }
+    if (listNode === this.cardsList) {
+      this._centerCardAtHorizontalPosition(position);
+    } else {
+      this._centerCardAtColumnPosition(column, position);
+    }
   }
+
 };
 cardGroups.init();
 cardGroups.changeExpandedState(false);
