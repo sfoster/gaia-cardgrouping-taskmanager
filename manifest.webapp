@@ -1,0 +1,17 @@
+{
+  "name": "CardGrouping Test",
+  "description": "CardGrouping Test",
+  "launch_path": "/cardgroup.html",
+  "developer": {
+    "name": "The Gaia Team",
+    "url": "https://github.com/mozilla-b2g/gaia"
+  },
+  "orientation": "default",
+  "fullscreen": true,
+  "permissions": {
+  },
+  "default_locale": "en-US",
+  "icons": {
+    "128": "/icons/128x128.png"
+  }
+}

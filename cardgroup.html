@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+<meta charset='UTF-8'>
+<link rel="stylesheet" href="./cards_view.css">
+<style>
+  html, body {
+    padding: 0; margin: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+  }
+  #container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #cards-list {
+   position: absolute;
+   top: 0; left: 0;
+   width: 2000px;
+   height: 100%;
+  }
+
+  #cards-list > [data-position="0"].column {
+    left: 80px;
+  }
+  #cards-list > [data-position="1"].column {
+    left: 265px;
+  }
+  #cards-view .column.expanded > .cardgroup-list > [data-position="0"].row {
+    transform: translateY(0);
+    z-index: 0;
+  }
+  #cards-view .column.expanded > .cardgroup-list > [data-position="1"].row {
+    transform: translateY(calc(50vh + 120px));
+    z-index: 1;
+  }
+  #cards-view .column.expanded > .cardgroup-list > [data-position="2"].row {
+    transform: translateY(calc(100vh + 240px));
+    z-index: 2;
+  }
+
+
+  [data-app-instance-id="0"].card .screenshotView {
+    background: url('./images/green.jpg') no-repeat;
+  }
+  [data-app-instance-id="1"].card .screenshotView {
+    background: url('./images/blue.jpg') no-repeat;
+  }
+  [data-app-instance-id="2"].card .screenshotView {
+    background: url('./images/green.jpg') no-repeat;
+  }
+</style>
+</head>
+<body class="portrait">
+
+<div id="container">
+<div class="active" id="cards-view" data-z-index-level="cards-view">
+  <ul style="width: 505px;" id="cards-list">
+    <li class="column" aria-posinset="2" aria-setsize="2" data-position="0">
+      <ul class="cardgroup-list">
+        <li class="card row show-subtitle browser" role="presentation">
+          <div class="titles">
+            <h1 id="card-title-0" dir="auto" class="title">Foo - Wikipedia, the free encyclopedia</h1>
+            <p class="subtitle">
+              <span class="subtitle-url">en.m.wikipedia.org/wiki/Foo</span>
+            </p>
+          </div>
+          <div aria-label="Open" class="screenshotView bb-button" data-l10n-id="openCard" role="link"></div>
+          <div class="privateOverlay"></div>
+          <div class="appIconView" style="background-image: url(./icons/32x32.png)"></div>
+
+          <footer class="card-tray">
+           <button style="background-image: url(./icons/32x32.png);" aria-label="Open" class="appIcon" data-l10n-id="openCard" data-button-action="select" aria-hidden="true"></button>
+           <menu class="buttonbar">
+             <button aria-label="Close" class="close-button bb-button" data-l10n-id="closeCard" data-button-action="close" role="button" style="visibility: visible"></button>
+            <button class="favorite-button bb-button" data-button-action="favorite" role="button" style="visibility: hidden"></button>
+           </menu>
+          </footer>
+        </li>
+      </ul>
+    </li>
+    <li class="column" aria-posinset="2" aria-setsize="2" data-position="1">
+      <ul class="cardgroup-list">
+        <li class="card row show-subtitle browser" role="presentation">
+          <div class="titles">
+            <h1 id="card-title-0" dir="auto" class="title">Grue - Wikipedia, the free encyclopedia</h1>
+            <p class="subtitle">
+              <span class="subtitle-url">en.m.wikipedia.org/wiki/Grue</span>
+            </p>
+          </div>
+          <div aria-label="Open" class="screenshotView bb-button" data-l10n-id="openCard" role="link"></div>
+          <div class="privateOverlay"></div>
+          <div class="appIconView" style="background-image: url(./icons/32x32.png)"></div>
+
+          <footer class="card-tray">
+           <button style="background-image: url(./icons/32x32.png);" aria-label="Open" class="appIcon" data-l10n-id="openCard" data-button-action="select" aria-hidden="true"></button>
+           <menu class="buttonbar">
+             <button aria-label="Close" class="close-button bb-button" data-l10n-id="closeCard" data-button-action="close" role="button" style="visibility: visible"></button>
+            <button class="favorite-button bb-button" data-button-action="favorite" role="button" style="visibility: hidden"></button>
+           </menu>
+          </footer>
+        </li>
+
+        <li class="card row show-subtitle browser" role="presentation">
+          <div class="titles">
+            <h1 id="card-title-1" dir="auto" class="title">Zonk - Wikipedia, the free encyclopedia</h1>
+            <p class="subtitle">
+              <span class="subtitle-url">en.m.wikipedia.org/wiki/Zonk</span>
+            </p>
+          </div>
+          <div aria-label="Open" class="screenshotView bb-button" data-l10n-id="openCard" role="link"></div>
+          <div class="privateOverlay"></div>
+          <div class="appIconView" style="background-image: url(./icons/64x64.png);"></div>
+
+          <footer class="card-tray">
+           <button style="background-image: url(./icons/64x64.png);" aria-label="Open" class="appIcon" data-l10n-id="openCard" data-button-action="select" aria-hidden="true"></button>
+           <menu class="buttonbar">
+             <button aria-label="Close" class="close-button bb-button" data-l10n-id="closeCard" data-button-action="close" role="button" style="visibility: visible"></button>
+            <button class="favorite-button bb-button" data-button-action="favorite" role="button" style="visibility: hidden"></button>
+           </menu>
+          </footer>
+        </li>
+      </ul>
+    </li>
+  </ul>
+  <span id="cards-no-recent-windows" class="no-recent-apps" data-l10n-id="no-recent-app-windows">Your recent app windows show up here</span>
+</div>
+
+</div>
+<script defer src="gesture.js"></script>
+<script defer src="cardview.js"></script>
+</body>
+</html>
