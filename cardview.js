@@ -329,6 +329,8 @@ var cardGroups = {
           target.style.willChange =   'transform';
           target.style.transition = 'transform 0s linear';
           this.toggleScrollingOnAxis('horizontal', false);
+        } else {
+          this.toggleScrollingOnAxis('vertical', false);
         }
         break;
       case 'cardview-swipe-end':
