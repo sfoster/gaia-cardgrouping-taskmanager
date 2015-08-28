@@ -11,10 +11,10 @@
   background-color: rgb(51, 51, 51);
   /* Specifies that each child element’s snap coordinate should
      align with the x-axis center of the scroll container */
-  /*scroll-snap-destination: 50% 0;*/
+  scroll-snap-destination: 50% 0;
   /* Requires that scrolling always end at a snap point
      when the operation completes (hard snap). */
-  /*scroll-snap-type: mandatory;*/
+  scroll-snap-type: mandatory;
 }
 
 @media not all and (-moz-physical-home-button) {
@@ -93,7 +93,10 @@
   transform: translateY(0);
   /* Defines the center of each card (column) as the
      coordinate that should be used for snapping */
-  /*scroll-snap-coordinate: 50% 50%;*/
+  scroll-snap-destination: 0 50%;
+  /* Requires that scrolling always end at a snap point
+     when the operation completes (hard snap). */
+  scroll-snap-type: mandatory;
 }
 
 #cards-view .card {
@@ -104,9 +107,9 @@
   width: 50vw;
   height: 50%;
   transform: translateY(0);
-  /* Defines the center of each card (column) as the
+  /* Defines the center of each card as the
      coordinate that should be used for snapping */
-  /*scroll-snap-coordinate: 50% 50%;*/
+  scroll-snap-coordinate: 50% 50%;
 }
 
 #cards-view .column.sliding {
@@ -155,6 +158,7 @@
   transition-delay: 0, 0s;
   z-index: 0;
 }
+
 #cards-view [data-position="0"].column.expanded > .cardgroup-list > .card {
   z-index: 1;
 }

@@ -30,18 +30,6 @@
   #cards-list > [data-position="1"].column {
     left: 265px;
   }
-  #cards-view .column.expanded > .cardgroup-list > [data-position="0"].row {
-    transform: translateY(0);
-    z-index: 0;
-  }
-  #cards-view .column.expanded > .cardgroup-list > [data-position="1"].row {
-    transform: translateY(calc(50vh + 120px));
-    z-index: 1;
-  }
-  #cards-view .column.expanded > .cardgroup-list > [data-position="2"].row {
-    transform: translateY(calc(100vh + 240px));
-    z-index: 2;
-  }
 
 
   [data-app-instance-id="0"].card .screenshotView {
@@ -132,6 +120,7 @@
 
 </div>
 <script defer src="gesture.js"></script>
+<script defer src="event_safety.js"></script>
 <script defer src="cardview.js"></script>
 </body>
 </html>

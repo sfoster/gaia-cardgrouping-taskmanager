@@ -41,44 +41,6 @@ Array.from(document.querySelectorAll('#cards-list > .column')).forEach(function(
             }
             break;
         }
-      },
-      _not_in_use_handleSwipeEvent: function(evt) {
-        switch (evt.detail.gestureType) {
-          case 'swipe-up-start':
-            // dont try and transition while dragging
-            this.element.style.willChange =   'transform';
-            this.element.style.transition = 'transform 0s linear';
-            break;
-          case 'swipe-up-abort':
-            console.log('gesture consumer, got event: ', evt.type, evt);
-            this.element.style.transform = '';
-            break;
-          case 'swipe-up-move':
-            if (!this._rafId) {
-              this._rafId = window.requestAnimationFrame(function() {
-                this.element.style.transform = 'translateY(' +this.deltaY + 'px)';
-                this._rafId = null;
-              }.bind(this));
-            }
-            this.deltaY = evt.detail.deltaY;
-            break;
-          case 'swipe-up-end':
-            console.log('gesture consumer, got event: ', evt.type, evt);
-            verticalY = -1 * evt.detail.deltaY;
-            // cross-slide should be more up than across
-            if (verticalY > Math.abs(evt.detail.deltaX) &&
-                verticalY > this.SWIPE_UP_THRESHOLD &&
-                this.app.killable()) {
-              // leave the card where it is if it will be destroyed
-              this.killApp();
-            } else {
-              //
-            }
-            // return it to vertical center
-            this.element.style.removeProperty('transition');
-            this.element.style.transform = 'translateY(0)';
-            break;
-        }
       }
     };
     cards.push(card);
@@ -112,12 +74,16 @@ var cardGroups = {
     this._setContentWidth(this.cardsList.children.length);
     // decorate each <li> with its position in its list
     // we do this in the card.init too, whatever.
-    Array.from(this.element.querySelectorAll('ul.cardgroup-list')).forEach(function(listNode) {
+    Array.from(this.element.querySelectorAll('.column')).forEach(function(column) {
+      var listNode = column.firstElementChild;
       this._updateCardPositions(listNode);
+      this._placeCardsInColumn(column);
     }, this);
+    this._placeCardsInRow();
   },
 
   _setContentWidth: function (length) {
+    var listNode = this.cardsList;
     var cardWidth = this.cardWidth;
     var margins = this.windowWidth - cardWidth;
     // total width of left/right "margin" + call cards and their gutters
@@ -126,6 +92,18 @@ var cardGroups = {
     var contentWidth = margins +
                        Math.max(cardWidth, cardStripWidth);
     this.cardsList.style.width = contentWidth + 'px';
+  },
+
+  _setColumnHeight: function (column, length) {
+    var listNode = column.firstElementChild;
+    var cardHeight = this.cardHeight;
+    var margins = this.windowHeight - cardHeight;
+    // total height of top/bottom "margin" + all cards and their vertical spacing
+    var cardStripHeight = (cardHeight * length) +
+                         (this.CARD_VERTICAL_SPACING * (length - 1));
+    var contentHeight = margins +
+                       Math.max(cardHeight, cardStripHeight);
+    listNode.style.height = contentHeight + 'px';
   },
 
   isCard: function(elem) {
@@ -163,6 +141,7 @@ var cardGroups = {
           i < rows.length;
           i++) {
         swipeDetector.attachToElement(rows[i]);
+        rows[i].style.removeProperty('transform');
       }
     } else {
       if (this._expandedColumn) {
@@ -406,6 +385,70 @@ var cardGroups = {
     }
   },
 
+  _placeCardsInRow: function(rowElem, firstIndex, smoothly) {
+    rowElem = rowElem || this.element;
+    firstIndex = firstIndex || 0;
+    var listNode = rowElem.firstElementChild;
+    this._setContentWidth(listNode.childElementCount);
+
+    var cardWidth = this.cardWidth;
+    // add left margin to center the first card
+    var startX = (this.windowWidth - this.cardWidth) / 2;
+    var cardElements = Array.from(listNode.children).slice(firstIndex);
+
+    cardElements.forEach(function(elm, idx) {
+      var offset = (cardWidth + this.CARD_GUTTER);
+      var left = startX + offset * (idx + firstIndex);
+      elm.style.left = left + 'px';
+      if (smoothly) {
+        elm.style.transform = 'translateX(' +offset+ 'px)';
+        setTimeout(function() {
+          elm.classList.add('sliding');
+          elm.style.transform = 'translateX(0)';
+          eventSafety(elm, 'transitionend', function endSlide(e) {
+            elm.classList.remove('sliding');
+            elm.style.removeProperty('transform');
+          }, 250);
+        }, 0);
+      }
+    }, this);
+
+    // this._setAccessibilityAttributes();
+  },
+
+  _placeCardsInColumn: function(column, firstIndex, smoothly) {
+    firstIndex = firstIndex || 0;
+    var listNode = column.firstElementChild;
+    console.log('_placeCardsInColumn', column, firstIndex);
+    this._setColumnHeight(column, listNode.childElementCount);
+
+    var cardHeight = this.cardHeight;
+    // add left margin to center the first card
+    var startY = (this.windowHeight - this.cardHeight) / 2;
+    var cardElements = Array.from(listNode.children).slice(firstIndex);
+
+    cardElements.forEach(function(elm, idx) {
+      var offset = (cardHeight + this.CARD_VERTICAL_SPACING);
+      var top = startY + offset * (idx + firstIndex);
+      var fromTop = (top - startY) * -1;
+      elm.style.top = top + 'px'; // actual position
+      elm.style.transform = 'translateY(' +fromTop+ 'px)'; // in default/collapsed state, transform to 0;
+      console.log('_placeCardsInColumn, set top: ', elm.style.top, elm.dataset.appInstanceId);
+      // if (smoothly) {
+      //   elm.style.transform = 'translateY(' +offset+ 'px)';
+      //   setTimeout(function() {
+      //     elm.classList.add('sliding');
+      //     elm.style.transform = 'translateY(0)';
+      //     eventSafety(elm, 'transitionend', function endSlide(e) {
+      //       elm.classList.remove('sliding');
+      //       elm.style.removeProperty('transform');
+      //     }, 250);
+      //   }, 0);
+      // }
+    }, this);
+    // this._setAccessibilityAttributes();
+  },
+
   closeCard: function(elem) {
     console.log('closeCard for: ', elem);
     var listNode = elem.parentNode;
@@ -427,9 +470,11 @@ var cardGroups = {
       this._updateCardPositions(listNode); // pass the <ul>
     }
     if (listNode === this.cardsList) {
-      this._centerCardAtHorizontalPosition(position);
+      this._placeCardsInRow(position, true);
+      // this._centerCardAtHorizontalPosition(position);
     } else {
-      this._centerCardAtColumnPosition(column, position);
+      this._placeCardsInColumn(column, position, true);
+      // this._centerCardAtColumnPosition(column, position);
     }
   }
 
