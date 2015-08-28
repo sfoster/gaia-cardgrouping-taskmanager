@@ -1,7 +1,7 @@
 {
   "name": "CardGrouping Test",
   "description": "CardGrouping Test",
-  "launch_path": "/cardgroup.html",
+  "launch_path": "./cardgroup.html",
   "developer": {
     "name": "The Gaia Team",
     "url": "https://github.com/mozilla-b2g/gaia"
