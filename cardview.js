@@ -4,11 +4,20 @@ var _appInstanceIdCount = 0;
 // > .column > .cardgroup-list > [data-position="0"]
 var cards = [];
 
-Array.from(document.querySelectorAll('#cards-list > .column')).forEach(function(column, columnIdx) {
-  var cardElements = column.querySelectorAll('.cardgroup-list > .card');
-  var groupSize = cardElements.length;
+Array.from(document.querySelectorAll('#cards-list > .column')).forEach(function(column, columnIdx, set) {
+  // Update the screen reader column list size.
+  column.setAttribute('aria-setsize', set.length);
+  // Update the screen reader column index.
+  column.setAttribute('aria-posinset', columnIdx + 1);
 
-  Array.from(cardElements).forEach(function(elem, rowIdx) {
+  var cardElements = Array.from(column.querySelectorAll('.card'));
+  var groupSize = cardElements.length;
+  var isGroup = groupSize > 1;
+
+  if (isGroup) {
+    column.classList.add('group');
+  }
+  cardElements.forEach(function(elem, rowIdx) {
     var card = {
       element: elem,
       init: function() {
@@ -17,7 +26,9 @@ Array.from(document.querySelectorAll('#cards-list > .column')).forEach(function(
           killable: function() { return true; }
         };
         this.columnIndex = columnIdx;
-        this.rowIndex = rowIdx;
+        if (isGroup) {
+          this.rowIndex = rowIdx;
+        }
         this.closeButton = this.element.querySelector('.close-button');
         this.closeButton.addEventListener('click', this);
         this.element.dataset.groupsize = rowIdx === 0 ? groupSize : 1;
@@ -76,7 +87,7 @@ var cardGroups = {
     // we do this in the card.init too, whatever.
     Array.from(this.element.querySelectorAll('.column')).forEach(function(column) {
       var listNode = column.firstElementChild;
-      this._updateCardPositions(listNode);
+      this._updateItemPositions(listNode);
       this._placeCardsInColumn(column);
     }, this);
     this._placeCardsInRow();
@@ -378,16 +389,20 @@ var cardGroups = {
     }
   },
 
-  _updateCardPositions: function(listNode, firstIndex) {
-    var cardNodes = listNode.children;
-    for (var i = firstIndex || 0; cardNodes[i]; i++) {
-      if (cardNodes[i]) {
-        cardNodes[i].dataset.position = i;
+  _updateItemPositions: function(listNode, firstIndex) {
+    var itemNodes = listNode.children;
+    for (var item, i = firstIndex || 0; (item = itemNodes[i]); i++) {
+      if (item) {
+        item.dataset.position = i;
+        item.setAttribute('aria-setsize', itemNodes.length);
+      // Update the screen reader card index.
+        item.setAttribute('aria-posinset', i + 1);
       }
     }
   },
 
   _placeCardsInRow: function(rowElem, firstIndex, smoothly) {
+    console.log('_placeCardsInRow: ', rowElem, firstIndex, smoothly);
     rowElem = rowElem || this.element;
     firstIndex = firstIndex || 0;
     var listNode = rowElem.firstElementChild;
@@ -419,6 +434,7 @@ var cardGroups = {
   },
 
   _placeCardsInColumn: function(column, firstIndex, smoothly) {
+    console.log('_placeCardsInColumn: ', column, firstIndex, smoothly);
     firstIndex = firstIndex || 0;
     var listNode = column.firstElementChild;
     console.log('_placeCardsInColumn', column, firstIndex);
@@ -460,7 +476,7 @@ var cardGroups = {
     elem.remove();
 
     if (listNode.childElementCount) {
-      this._updateCardPositions(listNode); // pass the <ul>
+      this._updateItemPositions(listNode); // pass the <ul>
       lastIndex = listNode.childElementCount -1;
       position = Math.min(position, lastIndex);
     } else {
@@ -469,10 +485,10 @@ var cardGroups = {
       position = Math.min(parseInt(column.dataset.position), lastIndex);
       console.log('closeCard, remove empty column', column, position);
       column.remove();
-      this._updateCardPositions(listNode); // pass the <ul>
+      this._updateItemPositions(listNode); // pass the <ul>
     }
     if (listNode === this.cardsList) {
-      this._placeCardsInRow(position, true);
+      this._placeCardsInRow(null, position, true);
       // this._centerCardAtHorizontalPosition(position);
     } else {
       this._placeCardsInColumn(column, position, true);

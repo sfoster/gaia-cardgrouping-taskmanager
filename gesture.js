@@ -168,8 +168,7 @@ SwipeDetector.prototype = {
           return;
         }
         // swipe gestures are not multi-touch
-        var touches = evt.touches.length + evt.changedTouches.length;
-        if (touches > 1) {
+        if (evt.touches.length > 1) {
           this._cancelCurrentSwipe(evt);
           return;
         }
